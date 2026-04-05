@@ -1,0 +1,107 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: userId (Firebase Auth UID)
+    // Fields:
+    //   - uid: string (required) - User's unique ID
+    //   - email: string (required) - User's email
+    //   - displayName: string (optional) - User's display name
+    //   - photoURL: string (optional) - User's profile photo URL
+    //   - solvedProblems: list (optional) - Array of problem IDs solved
+    //   - lastActive: number (optional) - Last active timestamp
+    //
+    // Collection: problems
+    // Document ID: problemId
+    // Fields:
+    //   - id: string (required)
+    //   - title: string (required)
+    //   - difficulty: string (required, enum: Easy, Medium, Hard)
+    //   - category: string (required)
+    //   - description: string (required)
+    //   - starterCode: string (required)
+    //   - solution: string (required)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+    
+    function isValidUrl(url) {
+      return url is string && (url.matches("^https://.*") || url.matches("^http://.*"));
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         (request.auth.token.email == "dhatri0201@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidUser(data) {
+      return hasOnlyAllowedFields(['uid', 'email', 'displayName', 'photoURL', 'solvedProblems', 'lastActive', 'role']) &&
+             data.uid is string && data.uid == request.auth.uid &&
+             data.email is string && isValidEmail(data.email) &&
+             (!('displayName' in data) || (data.displayName is string && data.displayName.size() < 100)) &&
+             (!('photoURL' in data) || isValidUrl(data.photoURL)) &&
+             (!('solvedProblems' in data) || (data.solvedProblems is list && data.solvedProblems.size() < 1000)) &&
+             (!('lastActive' in data) || data.lastActive is number);
+    }
+
+    function isValidProblem(data) {
+      return hasOnlyAllowedFields(['id', 'title', 'difficulty', 'category', 'description', 'starterCode', 'solution']) &&
+             data.id is string && data.id.size() > 0 &&
+             data.title is string && data.title.size() > 0 &&
+             data.difficulty in ['Easy', 'Medium', 'Hard'] &&
+             data.category is string &&
+             data.description is string &&
+             data.starterCode is string &&
+             data.solution is string;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && isValidUser(request.resource.data) && (!('role' in request.resource.data) || request.resource.data.role == 'user');
+      allow update: if isOwner(userId) && isValidUser(request.resource.data) && (request.resource.data.role == resource.data.role || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    match /problems/{problemId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    match /test/connection {
+      allow read: if true;
+    }
+  }
+}

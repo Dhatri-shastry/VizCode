@@ -1,0 +1,99 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap');
+@import "tailwindcss";
+
+@variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-lavender: #E6E6FA;
+  --color-dark-lavender: #7C3AED;
+  --color-soft-lavender: #F4F3FF;
+  --color-black: #0A0A0A;
+  --color-card-bg: #FFFFFF;
+  
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-soft-lavender text-slate-900 font-sans antialiased transition-colors duration-500 italic font-normal;
+  }
+  
+  .dark body {
+    @apply bg-black text-white;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-normal italic;
+  }
+
+  button {
+    @apply font-normal italic;
+  }
+}
+
+.glass {
+  @apply bg-white/60 backdrop-blur-xl border border-white/40 shadow-xl;
+}
+
+.dark .glass {
+  @apply bg-white/5 border-white/10 shadow-none;
+}
+
+.dark .card-bg-custom {
+  @apply bg-[#121212] border-white/5;
+}
+
+.card-bg-custom {
+  @apply bg-white border-slate-100 shadow-xl shadow-slate-200/50;
+}
+
+.orbit-line {
+  @apply border border-slate-200/30 rounded-full absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2;
+  box-shadow: inset 0 0 10px rgba(124, 58, 237, 0.05);
+}
+
+.dark .orbit-line {
+  @apply border-white/10;
+}
+
+.planet {
+  @apply w-12 h-12 min-w-[3rem] min-h-[3rem] rounded-full bg-gradient-to-br from-dark-lavender to-indigo-600 flex items-center justify-center shadow-2xl shadow-dark-lavender/40 relative flex-shrink-0 overflow-hidden aspect-square;
+  box-shadow: 0 0 20px rgba(124, 58, 237, 0.3);
+}
+
+.planet::before {
+  content: '';
+  @apply absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300;
+}
+
+.planet::after {
+  content: '';
+  @apply absolute inset-0 rounded-full bg-dark-lavender blur-md opacity-40 -z-10;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(124, 58, 237, 0.1);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(124, 58, 237, 0.3);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(177, 156, 217, 0.1);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(177, 156, 217, 0.3);
+}
